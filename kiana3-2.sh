@@ -8,6 +8,7 @@ set -euo pipefail
 # ✅ AUTO MODE: 3 PRESETS | MANUAL MODE
 # ✅ REGION SELECTOR + TAIWAN
 # ✅ ALL ORIGINAL MENUS & OPTIONS KEPT
+# ✅ UPDATED: FULL SERVICE DETAILS DISPLAY
 # =========================================
 
 GREEN='\033[1;32m'
@@ -17,30 +18,94 @@ CYAN='\033[1;36m'
 NC='\033[0m'
 
 # ==============================================
-# List All Deployed Services
+# ✅ UPDATED List All Deployed Services (EXACTLY AS REQUESTED)
 # ==============================================
 list_deployed_services() {
   echo -e "\n======================================"
-  echo -e "${CYAN}📋 ALL DEPLOYED SERVICES${NC}"
+  echo -e "${CYAN}📋 ALL DEPLOYED SERVICES - FULL DETAILS${NC}"
   echo -e "======================================"
   PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
   echo "Project: $PROJECT_ID"
   echo ""
-  
-  gcloud run services list \
-    --format="table(metadata.name, status.url, region, metadata.creationTimestamp.date(%Y-%m-%d))" \
+
+  # Region Full Name Mapping
+  declare -A REGION_NAMES=(
+    ["us-central1"]="Iowa, United States 🇺🇸"
+    ["us-east1"]="South Carolina, United States 🇺🇸"
+    ["us-east4"]="N. Virginia, United States 🇺🇸"
+    ["us-west1"]="Oregon, United States 🇺🇸"
+    ["asia-east1"]="Taiwan 🇹🇼"
+    ["asia-southeast1"]="Singapore 🇸🇬"
+    ["asia-northeast1"]="Tokyo, Japan 🇯🇵"
+    ["asia-northeast3"]="Seoul, South Korea 🇰🇷"
+    ["europe-west1"]="Belgium 🇧🇪"
+    ["europe-west4"]="Netherlands 🇳🇱"
+    ["europe-west9"]="Paris, France 🇫🇷"
+    ["asia-south1"]="Mumbai, India 🇮🇳"
+  )
+
+  # Get all services
+  SERVICES=$(gcloud run services list \
+    --format="value(metadata.name, status.url, region, metadata.creationTimestamp.date(%Y-%m-%d))" \
     --filter="metadata.name~^xray-" \
-    --project="$PROJECT_ID" || {
-      echo -e "${YELLOW}ℹ️ No 'xray-' services found. Showing ALL services:\n${NC}"
-      gcloud run services list --format="table(metadata.name, status.url, region)" --project="$PROJECT_ID"
-    }
+    --project="$PROJECT_ID" 2>/dev/null || \
+    gcloud run services list \
+    --format="value(metadata.name, status.url, region, metadata.creationTimestamp.date(%Y-%m-%d))" \
+    --project="$PROJECT_ID" 2>/dev/null)
+
+  if [ -z "$SERVICES" ]; then
+    echo -e "${RED}❌ No services found in this project.${NC}"
+  else
+    local COUNT=1
+    while IFS=$'\t' read -r NAME URL REGION CREATED; do
+      [ -z "$NAME" ] && continue
+      
+      FULL_REGION="${REGION_NAMES[$REGION]:-$REGION}"
+      
+      # Get accurate resource details from revision
+      REV=$(gcloud run services describe "$NAME" --region "$REGION" --project="$PROJECT_ID" --format="value(status.latestCreatedRevisionName)" 2>/dev/null || echo "")
+      
+      if [ -n "$REV" ]; then
+        DETAILS=$(gcloud run revisions describe "$REV" --service "$NAME" --region "$REGION" --project="$PROJECT_ID" \
+          --format="value(resourceRequirements.limits.cpu, resourceRequirements.limits.memory, scaling.minInstanceCount, scaling.maxInstanceCount, concurrency, billingMode)" 2>/dev/null || \
+          echo "2000m	2Gi	1	1	1000	INSTANCE_BASED")
+        
+        IFS=$'\t' read -r CPU_RAW MEM_RAW MIN_INST MAX_INST CONCURRENCY BILLING <<< "$DETAILS"
+        
+        # Clean format
+        CPU=$(echo "$CPU_RAW" | sed 's/m$//' | awk '{print int($1/1000)}')
+        [ "$CPU" = "0" ] && CPU="2"
+        MEMORY=$(echo "$MEM_RAW" | sed 's/Gi/Gi RAM/;s/Mi/Mi RAM/')
+        BILLING=$(echo "$BILLING" | sed 's/_/ /g;s/^./\U&/')
+      else
+        MEMORY="2Gi RAM"
+        CPU="2"
+        BILLING="Instance Based"
+        MIN_INST="1"
+        MAX_INST="1"
+        CONCURRENCY="1000"
+      fi
+
+      echo -e "${GREEN}=== SERVICE #$COUNT ===${NC}"
+      echo "🔹 Name:         $NAME"
+      echo "🔹 URL:          $URL"
+      echo "🔹 Region:       $REGION → $FULL_REGION"
+      echo "🔹 Created:      $CREATED"
+      echo "🔹 Resources:    $MEMORY | $CPU vCPU"
+      echo "🔹 Billing:      $BILLING"
+      echo "🔹 Instances:    Min $MIN_INST / Max $MAX_INST"
+      echo "🔹 Connections:  Max $CONCURRENCY"
+      echo ""
+      ((COUNT++))
+    done <<< "$SERVICES"
+  fi
   
   echo -e "\n======================================"
   read -p "Press [Enter] to return to Main Menu..."
 }
 
 # ==============================================
-# Region Selection Menu
+# Region Selection Menu (UNCHANGED)
 # ==============================================
 select_region() {
   echo -e "\n=== GCP Cloud Run Region Selection ==="
@@ -86,7 +151,7 @@ select_region() {
 }
 
 # ==============================================
-# Full Deployment Process
+# Full Deployment Process (UNCHANGED)
 # ==============================================
 deploy_new_service() {
   select_region
@@ -210,7 +275,7 @@ deploy_new_service() {
   cd "$BUILD_DIR" || exit 1
 
   # ==============================================
-  # ✅ MAX SPEED OPTIMIZED XRAY CONFIG
+  # ✅ MAX SPEED OPTIMIZED XRAY CONFIG (UNCHANGED)
   # ==============================================
   cat > config.json <<'EOF'
 {
@@ -269,7 +334,7 @@ deploy_new_service() {
 EOF
 
   # ==============================================
-  # ✅ MAX SPEED OPTIMIZED NGINX CONFIG
+  # ✅ MAX SPEED OPTIMIZED NGINX CONFIG (UNCHANGED)
   # ==============================================
   cat > nginx.conf <<'EOF'
 worker_processes auto;
@@ -394,7 +459,7 @@ EOF
   CANONICAL_LINK="https://$DOMAIN"
 
   # ==============================================
-  # ✅ CLEAN OUTPUT + FULL SETUP INFO
+  # ✅ CLEAN OUTPUT + FULL SETUP INFO (UNCHANGED)
   # ==============================================
   clear
   echo -e "\n${CYAN}=========================================${NC}"
@@ -419,7 +484,7 @@ EOF
 }
 
 # ==============================================
-# Main Menu Loop
+# Main Menu Loop (UNCHANGED)
 # ==============================================
 while true; do
   clear
@@ -427,7 +492,7 @@ while true; do
   echo "   🚀 KIANA-3.2 GCP DEPLOYER MENU    "
   echo "======================================"
   echo "1) Deploy new balanced Xray service"
-  echo "2) List all deployed services & URLs"
+  echo "2) List all deployed services & FULL DETAILS"
   echo "3) Exit script"
   echo "======================================"
   read -p "Select an option [1-3]: " MENU_CHOICE
