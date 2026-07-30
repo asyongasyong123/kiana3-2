@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =========================================
-# 🚀 KIANA-3.1 GCP DEPLOYER | ENVOY OPTION EDITION
+# 🚀 KIANA-3.2 GCP DEPLOYER | ENVOY OPTION EDITION
 # ✅ CHOOSE: NGINX (BALANCED) or ENVOY (LOW LATENCY)
 # ✅ MAX SPEED OPTIMIZATIONS FOR BOTH
 # ✅ CANONICAL SHORT LINK + FULL SETUP INFO
@@ -127,7 +127,7 @@ deploy_new_service() {
   clear
   echo ""
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.1 GCP DEPLOYER | ENVOY OPTION${NC}"
+  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | ENVOY OPTION${NC}"
   echo -e "${GREEN}✅ FRONTEND: ${FRONTEND^^} + XRAY${NC}"
   echo -e "${GREEN}✅ MAX SPEED OPTIMIZED${NC}"
   echo -e "${CYAN}=========================================${NC}"
@@ -483,7 +483,7 @@ EOF
 while true; do
   clear
   echo "======================================"
-  echo "   🚀 KIANA-3.1 GCP DEPLOYER MENU    "
+  echo "   🚀 KIANA-3.2 GCP DEPLOYER MENU    "
   echo "======================================"
   echo "1) Deploy new service (Choose Nginx/Envoy)"
   echo "2) List all deployed services & URLs"
