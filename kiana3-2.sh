@@ -4,11 +4,12 @@ set -euo pipefail
 # =========================================
 # 🚀 KIANA-3.2 GCP DEPLOYER | FINAL VERSION
 # ✅ MAX SPEED: OPTIMIZED NGINX + XRAY
-# ✅ CANONICAL SHORT LINK + FULL SETUP INFO
-# ✅ AUTO MODE: 3 PRESETS | MANUAL MODE
+# ✅ MATCHED TIMEOUTS: 86400s
+# ✅ PATHS: /tr-ConFig /vl-ConFig
+# ✅ PASSWORD: kiana-2
 # ✅ REGION SELECTOR + TAIWAN
-# ✅ ALL ORIGINAL MENUS & OPTIONS KEPT
-# ✅ UPDATED: FULL SERVICE DETAILS DISPLAY
+# ✅ FULL SERVICE DETAILS DISPLAY
+# ✅ SHORT LINK + FULL LINK ONLY
 # =========================================
 
 GREEN='\033[1;32m'
@@ -18,7 +19,7 @@ CYAN='\033[1;36m'
 NC='\033[0m'
 
 # ==============================================
-# ✅ UPDATED List All Deployed Services (EXACTLY AS REQUESTED)
+# List All Deployed Services
 # ==============================================
 list_deployed_services() {
   echo -e "\n======================================"
@@ -28,7 +29,6 @@ list_deployed_services() {
   echo "Project: $PROJECT_ID"
   echo ""
 
-  # Region Full Name Mapping
   declare -A REGION_NAMES=(
     ["us-central1"]="Iowa, United States 🇺🇸"
     ["us-east1"]="South Carolina, United States 🇺🇸"
@@ -44,14 +44,17 @@ list_deployed_services() {
     ["asia-south1"]="Mumbai, India 🇮🇳"
   )
 
-  # Get all services
   SERVICES=$(gcloud run services list \
     --format="value(metadata.name, status.url, region, metadata.creationTimestamp.date(%Y-%m-%d))" \
     --filter="metadata.name~^xray-" \
-    --project="$PROJECT_ID" 2>/dev/null || \
-    gcloud run services list \
-    --format="value(metadata.name, status.url, region, metadata.creationTimestamp.date(%Y-%m-%d))" \
     --project="$PROJECT_ID" 2>/dev/null)
+
+  if [ -z "$SERVICES" ]; then
+    echo -e "${YELLOW}ℹ️ No 'xray-' services found. Showing ALL services:\n${NC}"
+    SERVICES=$(gcloud run services list \
+      --format="value(metadata.name, status.url, region, metadata.creationTimestamp.date(%Y-%m-%d))" \
+      --project="$PROJECT_ID" 2>/dev/null)
+  fi
 
   if [ -z "$SERVICES" ]; then
     echo -e "${RED}❌ No services found in this project.${NC}"
@@ -59,39 +62,20 @@ list_deployed_services() {
     local COUNT=1
     while IFS=$'\t' read -r NAME URL REGION CREATED; do
       [ -z "$NAME" ] && continue
-      
       FULL_REGION="${REGION_NAMES[$REGION]:-$REGION}"
       
-      # Get accurate resource details from revision
-      REV=$(gcloud run services describe "$NAME" --region "$REGION" --project="$PROJECT_ID" --format="value(status.latestCreatedRevisionName)" 2>/dev/null || echo "")
+      DETAILS=$(gcloud run services describe "$NAME" \
+        --region "$REGION" --project="$PROJECT_ID" \
+        --format="value(memory, cpu, billingMode, minInstances, maxInstances, concurrency)" 2>/dev/null || echo "N/A	N/A	N/A	N/A	N/A	N/A")
       
-      if [ -n "$REV" ]; then
-        DETAILS=$(gcloud run revisions describe "$REV" --service "$NAME" --region "$REGION" --project="$PROJECT_ID" \
-          --format="value(resourceRequirements.limits.cpu, resourceRequirements.limits.memory, scaling.minInstanceCount, scaling.maxInstanceCount, concurrency, billingMode)" 2>/dev/null || \
-          echo "2000m	2Gi	1	1	1000	INSTANCE_BASED")
-        
-        IFS=$'\t' read -r CPU_RAW MEM_RAW MIN_INST MAX_INST CONCURRENCY BILLING <<< "$DETAILS"
-        
-        # Clean format
-        CPU=$(echo "$CPU_RAW" | sed 's/m$//' | awk '{print int($1/1000)}')
-        [ "$CPU" = "0" ] && CPU="2"
-        MEMORY=$(echo "$MEM_RAW" | sed 's/Gi/Gi RAM/;s/Mi/Mi RAM/')
-        BILLING=$(echo "$BILLING" | sed 's/_/ /g;s/^./\U&/')
-      else
-        MEMORY="2Gi RAM"
-        CPU="2"
-        BILLING="Instance Based"
-        MIN_INST="1"
-        MAX_INST="1"
-        CONCURRENCY="1000"
-      fi
+      IFS=$'\t' read -r MEMORY CPU BILLING MIN_INST MAX_INST CONCURRENCY <<< "$DETAILS"
 
       echo -e "${GREEN}=== SERVICE #$COUNT ===${NC}"
       echo "🔹 Name:         $NAME"
       echo "🔹 URL:          $URL"
       echo "🔹 Region:       $REGION → $FULL_REGION"
       echo "🔹 Created:      $CREATED"
-      echo "🔹 Resources:    $MEMORY | $CPU vCPU"
+      echo "🔹 Resources:    $MEMORY RAM | $CPU vCPU"
       echo "🔹 Billing:      $BILLING"
       echo "🔹 Instances:    Min $MIN_INST / Max $MAX_INST"
       echo "🔹 Connections:  Max $CONCURRENCY"
@@ -105,26 +89,27 @@ list_deployed_services() {
 }
 
 # ==============================================
-# Region Selection Menu (UNCHANGED)
+# Region Selection Menu
 # ==============================================
 select_region() {
   echo -e "\n=== GCP Cloud Run Region Selection ==="
   echo "--- North America ---"
-  echo "1) us-central1      (Iowa, US)"
-  echo "2) us-east1         (South Carolina, US)"
-  echo "3) us-east4         (Northern Virginia, US)"
-  echo "4) us-west1         (Oregon, US)"
+  echo "1) us-central1      (Iowa, US 🇺🇸 - Recommended)"
+  echo "2) us-east1         (South Carolina, US 🇺🇸)"
+  echo "3) us-east4         (N. Virginia, US 🇺🇸)"
+  echo "4) us-west1         (Oregon, US 🇺🇸)"
   echo ""
   echo "--- Asia Pacific ---"
-  echo "5) asia-east1       (Taiwan 🇹🇼 — RECOMMENDED FOR MAX SPEED!)"
-  echo "6) asia-southeast1  (Singapore)"
-  echo "7) asia-northeast1  (Tokyo, Japan)"
-  echo "8) asia-northeast3  (Seoul, South Korea)"
+  echo "5) asia-east1       (Taiwan 🇹🇼)"
+  echo "6) asia-southeast1  (Singapore 🇸🇬)"
+  echo "7) asia-northeast1  (Tokyo, Japan 🇯🇵)"
+  echo "8) asia-northeast3  (Seoul, South Korea 🇰🇷)"
+  echo "9) asia-south1      (Mumbai, India 🇮🇳)"
   echo ""
   echo "--- Europe ---"
-  echo "9) europe-west1     (Belgium)"
-  echo "10) europe-west4    (Netherlands)"
-  echo "11) europe-west9    (Paris, France)"
+  echo "10) europe-west1     (Belgium 🇧🇪)"
+  echo "11) europe-west4    (Netherlands 🇳🇱)"
+  echo "12) europe-west9    (Paris, France 🇫🇷)"
   echo ""
   echo "0) Manually enter custom region code"
   echo ""
@@ -140,9 +125,10 @@ select_region() {
     6) REGION="asia-southeast1" ;;
     7) REGION="asia-northeast1" ;;
     8) REGION="asia-northeast3" ;;
-    9) REGION="europe-west1" ;;
-    10) REGION="europe-west4" ;;
-    11) REGION="europe-west9" ;;
+    9) REGION="asia-south1" ;;
+    10) REGION="europe-west1" ;;
+    11) REGION="europe-west4" ;;
+    12) REGION="europe-west9" ;;
     0) read -p "Enter full region code: " REGION ;;
     *) echo -e "${YELLOW}⚠️ Invalid input! Using default: us-central1${NC}"; REGION="us-central1" ;;
   esac
@@ -151,7 +137,7 @@ select_region() {
 }
 
 # ==============================================
-# Full Deployment Process (UNCHANGED)
+# Full Deployment Process
 # ==============================================
 deploy_new_service() {
   select_region
@@ -167,10 +153,8 @@ deploy_new_service() {
   clear
   echo ""
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER BY Con Fig | FINAL VERSION${NC}"
-  echo -e "${GREEN}✅ MAX SPEED: OPTIMIZED NGINX + XRAY${NC}"
-  echo -e "${GREEN}✅ CANONICAL SHORT LINK + FULL SETUP INFO${NC}"
-  echo -e "${GREEN}✅ AUTO MODE: 3 PRESETS | MANUAL MODE${NC}"
+  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | By Con Fig${NC}"
+  echo -e "${GREEN}✅ MAX SPEED OPTIMIZATIONS${NC}"
   echo -e "${GREEN}✅ REGION SELECTOR + TAIWAN${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ Project:${NC} $PROJECT_ID"
@@ -190,7 +174,7 @@ deploy_new_service() {
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}          BILLING MODE${NC}"
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${YELLOW}Instance-Based = More Stable, No Throttling = MAX SPEED${NC}"
+  echo -e "${YELLOW}Instance-Based = More Stable, No Throttling${NC}"
   echo "1) Request-Based  |  2) Instance-Based"
   while true; do
       read -p "Select [1-2]: " BILLING_CHOICE
@@ -222,7 +206,7 @@ deploy_new_service() {
                   *) echo -e "${YELLOW}⚠️ Invalid! Using default: Balanced (2Gi+2vCPU)${NC}"
                      MEMORY="2Gi"; CPU="2"; CONCURRENCY="1000" ;;
               esac
-              TIMEOUT="3600"
+              TIMEOUT="86400"
               MIN_INST="1"
               MAX_INST="1"
               echo -e "${GREEN}✅ APPLIED: $MEMORY RAM + $CPU vCPU | Min/Max: 1/1${NC}"
@@ -253,7 +237,7 @@ deploy_new_service() {
               else
                   CONCURRENCY="1000"
               fi
-              TIMEOUT="3600"
+              TIMEOUT="86400"
 
               echo -e "${YELLOW}💡 Min Instances = 1 = No Disconnects${NC}"
               while true; do
@@ -275,7 +259,7 @@ deploy_new_service() {
   cd "$BUILD_DIR" || exit 1
 
   # ==============================================
-  # ✅ MAX SPEED OPTIMIZED XRAY CONFIG (UNCHANGED)
+  # ✅ MAX SPEED OPTIMIZED XRAY CONFIG
   # ==============================================
   cat > config.json <<'EOF'
 {
@@ -334,7 +318,7 @@ deploy_new_service() {
 EOF
 
   # ==============================================
-  # ✅ MAX SPEED OPTIMIZED NGINX CONFIG (UNCHANGED)
+  # ✅ MAX SPEED OPTIMIZED NGINX CONFIG
   # ==============================================
   cat > nginx.conf <<'EOF'
 worker_processes auto;
@@ -408,11 +392,6 @@ EOF
 
   cat > entrypoint.sh <<'EOF'
 #!/bin/sh
-# Apply extra network tweaks
-sysctl -w net.core.somaxconn=65535 2>/dev/null || true
-sysctl -w net.ipv4.tcp_tw_reuse=1 2>/dev/null || true
-
-# Start services
 /usr/local/bin/xray run -c /etc/xray.json &
 sleep 2
 exec /usr/local/openresty/bin/openresty -g 'daemon off;'
@@ -438,12 +417,7 @@ EOF
   echo -e "${CYAN}Building image...${NC}"
   gcloud builds submit --project="$PROJECT_ID" --tag gcr.io/$PROJECT_ID/$CLOUD_RUN_SERVICE_NAME . --quiet
 
-  # Apply NO THROTTLING for MAX SPEED
-  if [ "$BILLING_MODE" = "instance" ]; then
-    BILLING_FLAGS="--no-cpu-throttling"
-  else
-    BILLING_FLAGS="--cpu-throttling"
-  fi
+  BILLING_FLAGS=$([ "$BILLING_MODE" = "instance" ] && echo "--no-cpu-throttling" || echo "--cpu-throttling")
 
   echo -e "${CYAN}Deploying to Cloud Run...${NC}"
   gcloud run deploy $CLOUD_RUN_SERVICE_NAME \
@@ -453,38 +427,41 @@ EOF
     --timeout $TIMEOUT --min-instances $MIN_INST --max-instances $MAX_INST \
     --execution-environment gen2 --cpu-boost $BILLING_FLAGS --quiet
 
-  # Get Final Domain
   CLOUD_RUN_URL=$(gcloud run services describe $CLOUD_RUN_SERVICE_NAME --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
-  DOMAIN=$(echo "$CLOUD_RUN_URL" | sed 's|https://||')
-  CANONICAL_LINK="https://$DOMAIN"
+  SHORT_LINK="$CLOUD_RUN_URL"
+  FULL_LINK="$CLOUD_RUN_URL"
 
-  # ==============================================
-  # ✅ CLEAN OUTPUT + FULL SETUP INFO (UNCHANGED)
-  # ==============================================
   clear
   echo -e "\n${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ DEPLOYMENT SUCCESS!${NC}"
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🔗 CANONICAL / SHORT LINK:${NC} $CANONICAL_LINK"
-  echo -e "${GREEN}🌐 FULL DOMAIN:${NC} $DOMAIN"
-  echo -e "${GREEN}💚 HEALTH CHECK:${NC} https://$DOMAIN/health"
+  echo -e "${GREEN}🔗 CANONICAL / SHORT LINK:${NC} $SHORT_LINK"
+  echo -e "${GREEN}🌐 FULL LINK:${NC} $FULL_LINK"
+  echo -e "${GREEN}💚 HEALTH CHECK:${NC} $FULL_LINK/health"
   echo ""
-  echo -e "${CYAN}📋 SETUP DETAILS:${NC}"
-  echo -e "• Service Name: $CLOUD_RUN_SERVICE_NAME"
-  echo -e "• Region: $REGION"
-  echo -e "• Billing Mode: $BILLING_MODE"
-  echo -e "• Resources: $MEMORY RAM | $CPU vCPU | Max $CONCURRENCY connections"
-  echo -e "• Min/Max Instances: $MIN_INST / $MAX_INST"
-  echo -e "• Protocols: Trojan + VLESS over WebSocket TLS"
-  echo -e "• Optimizations: Nginx + Xray MAX SPEED Tweaks Applied"
+  echo -e "${CYAN}📋 CLIENT CONFIGS:${NC}"
+  DOMAIN_ONLY=$(echo "$FULL_LINK" | sed 's|https://||')
+  echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
+  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Port:      443"
+  echo "   Password:  kiana-2"
+  echo "   Path:      /tr-ConFig?ed=2560"
+  echo "   SNI:       $DOMAIN_ONLY"
+  echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
+  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Port:      443"
+  echo "   UUID:      a1b2c3d4-5678-40ef-98ab-cdef01234567"
+  echo "   Path:      /vl-ConFig?ed=2560"
+  echo "   Security:  TLS"
+  echo "   SNI:       $DOMAIN_ONLY"
   echo -e "${CYAN}=========================================${NC}"
+  echo -e "${YELLOW}💡 Max speed optimizations + BBR = faster, stable connection!${NC}"
 
-  echo -e "\n${YELLOW}💡 Balanced config: stable speeds, low heat, low battery usage!${NC}"
   read -p "\nPress [Enter] to return to Main Menu..."
 }
 
 # ==============================================
-# Main Menu Loop (UNCHANGED)
+# Main Menu Loop
 # ==============================================
 while true; do
   clear
