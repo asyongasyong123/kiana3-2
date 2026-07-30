@@ -102,7 +102,7 @@ deploy_new_service() {
   clear
   echo ""
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.1 GCP DEPLOYER | FINAL VERSION${NC}"
+  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER BY Con Fig | FINAL VERSION${NC}"
   echo -e "${GREEN}✅ MAX SPEED: OPTIMIZED NGINX + XRAY${NC}"
   echo -e "${GREEN}✅ CANONICAL SHORT LINK + FULL SETUP INFO${NC}"
   echo -e "${GREEN}✅ AUTO MODE: 3 PRESETS | MANUAL MODE${NC}"
@@ -234,7 +234,7 @@ deploy_new_service() {
       "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
-        "wsSettings": { "path": "/tr-ws?ed=2560" },
+        "wsSettings": { "path": "/tr-ConFig?ed=2560" },
         "sockopt": {
           "tcpNoDelay": true,
           "tcpFastOpen": true,
@@ -253,7 +253,7 @@ deploy_new_service() {
       "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
-        "wsSettings": { "path": "/vl-ws?ed=2560" },
+        "wsSettings": { "path": "/vl-ConFig?ed=2560" },
         "sockopt": {
           "tcpNoDelay": true,
           "tcpFastOpen": true,
@@ -320,7 +320,7 @@ http {
       proxy_set_header Host www.google.com;
     }
 
-    location /tr-ws {
+    location /tr-ConFig {
       proxy_pass http://127.0.0.1:10001;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
@@ -329,7 +329,7 @@ http {
       proxy_send_timeout 86400;
     }
 
-    location /vl-ws {
+    location /vl-ConFig {
       proxy_pass http://127.0.0.1:10002;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
