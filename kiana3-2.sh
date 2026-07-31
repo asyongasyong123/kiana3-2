@@ -3,14 +3,10 @@ set -euo pipefail
 
 # =========================================
 # 🚀 KIANA-3.2 GCP DEPLOYER | FINAL FIXED
+# ✅ ADDED JQ INSTALL = CORRECT RESOURCE DISPLAY
 # ✅ MAX SPEED: OPTIMIZED NGINX + XRAY
-# ✅ FIXED TIMEOUT: 3600s (MAX ALLOWED BY CLOUD RUN)
-# ✅ PATHS: /tr-ConFig /vl-ConFig
-# ✅ PASSWORD: kiana-2
-# ✅ BBR + TCP OPTIMIZATIONS
+# ✅ FIXED TIMEOUT: 3600s (MAX ALLOWED)
 # ✅ REGION SELECTOR + TAIWAN
-# ✅ ACCURATE SERVICE DETAILS
-# ✅ SHORT + FULL LINK ONLY
 # =========================================
 
 GREEN='\033[1;32m'
@@ -20,7 +16,19 @@ CYAN='\033[1;36m'
 NC='\033[0m'
 
 # ==============================================
-# List All Deployed Services (Accurate Values)
+# ✅ AUTO INSTALL REQUIRED JQ TOOL
+# ==============================================
+if ! command -v jq &> /dev/null; then
+  echo -e "\n${YELLOW}⚠️ Installing required tool: jq...${NC}"
+  sudo apt update -qq && sudo apt install -y -qq jq || {
+    echo -e "${RED}❌ Failed to install jq! Please install it manually.${NC}"
+    exit 1
+  }
+  echo -e "${GREEN}✅ jq installed successfully!${NC}"
+fi
+
+# ==============================================
+# List All Deployed Services (CORRECT VALUES NOW)
 # ==============================================
 list_deployed_services() {
   echo -e "\n======================================"
@@ -59,12 +67,14 @@ list_deployed_services() {
       [ -z "$NAME" ] && continue
       FULL_REGION="${REGION_NAMES[$REGION]:-$REGION}"
       
-      DETAILS=$(gcloud run services describe "$NAME" --region "$REGION" --project="$PROJECT_ID" \
-        --format="value(memory, cpu, billingMode, minInstances, maxInstances, concurrency)" 2>/dev/null || \
-        echo "2Gi	2	INSTANCE_BASED	1	1	1000")
-      
-      IFS=$'\t' read -r MEMORY CPU BILLING MIN_INST MAX_INST CONCURRENCY <<< "$DETAILS"
-      BILLING=$(echo "$BILLING" | sed 's/_/ /g;s/^./\U&/')
+      # ✅ USE JQ TO GET EXACT VALUES (NO MORE EMPTY!)
+      DETAILS_JSON=$(gcloud run services describe "$NAME" --region "$REGION" --project="$PROJECT_ID" --format=json 2>/dev/null)
+      MEMORY=$(echo "$DETAILS_JSON" | jq -r '.spec.template.spec.containers[0].resources.limits.memory // "N/A"')
+      CPU=$(echo "$DETAILS_JSON" | jq -r '.spec.template.spec.containers[0].resources.limits.cpu // "N/A"')
+      BILLING=$(echo "$DETAILS_JSON" | jq -r '.spec.template.spec.billingMode // "N/A"' | sed 's/_/ /g;s/^./\U&/')
+      MIN_INST=$(echo "$DETAILS_JSON" | jq -r '.spec.template.spec.minInstances // "N/A"')
+      MAX_INST=$(echo "$DETAILS_JSON" | jq -r '.spec.template.spec.maxInstances // "N/A"')
+      CONCURRENCY=$(echo "$DETAILS_JSON" | jq -r '.spec.template.spec.containerConcurrency // "N/A"')
 
       echo -e "${GREEN}=== SERVICE #$COUNT ===${NC}"
       echo "🔹 Name:         $NAME"
@@ -149,7 +159,7 @@ deploy_new_service() {
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | FINAL FIXED${NC}"
   echo -e "${GREEN}✅ MAX SPEED OPTIMIZATIONS${NC}"
-  echo -e "${GREEN}✅ FIXED TIMEOUT ERROR${NC}"
+  echo -e "${GREEN}✅ FIXED TIMEOUT & DISPLAY${NC}"
   echo -e "${GREEN}✅ REGION SELECTOR + TAIWAN${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ Project:${NC} $PROJECT_ID"
