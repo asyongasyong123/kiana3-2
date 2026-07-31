@@ -268,7 +268,7 @@ deploy_new_service() {
     "levels": {
       "0": {
         "handshake": 1,
-        "connIdle": 86400,
+        "connIdle": 3600,
         "bufferSize": 4194304
       }
     }
