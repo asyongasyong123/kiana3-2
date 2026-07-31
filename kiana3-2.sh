@@ -340,7 +340,7 @@ http {
   sendfile on;
   tcp_nodelay on;
   tcp_nopush on;
-  keepalive_timeout 86400;
+  keepalive_timeout 3600;
   keepalive_requests 100000;
   client_max_body_size 0;
 
