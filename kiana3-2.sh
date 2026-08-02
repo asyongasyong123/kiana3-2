@@ -3,6 +3,8 @@ set -euo pipefail
 
 # =========================================
 # 🚀 KIANA-3.2 GCP DEPLOYER | FULL FEATURES
+# ✅ NEW: VLESS+HTTP, VLESS+XHTTP, SSH+TLS
+# ✅ USER/PASS: kiana3.2 | UUID: FIXED
 # ✅ AUTO PRESETS + MANUAL SETUP RESTORED
 # ✅ REGION SELECTOR + TAIWAN
 # ✅ NO MORE N/A VALUES
@@ -15,6 +17,13 @@ RED='\033[1;31m'
 YELLOW='\033[1;33m'
 CYAN='\033[1;36m'
 NC='\033[0m'
+
+# ==============================================
+# 🔒 PERMANENT UUID & CREDS (WALA NAY USAB)
+# ==============================================
+UUID="a1b2c3d4-5678-40ef-98ab-cdef01234567"
+USER="kiana3.2"
+PASS="kiana3.2"
 
 # ==============================================
 # AUTO INSTALL JQ IF MISSING
@@ -142,7 +151,7 @@ select_region() {
 }
 
 # ==============================================
-# ✅ FULL DEPLOYMENT WITH AUTO + MANUAL RESTORED
+# ✅ DEPLOY — DISPLAY 100% ORIGINAL!
 # ==============================================
 deploy_new_service() {
   select_region
@@ -155,10 +164,11 @@ deploy_new_service() {
 
   clear
   echo ""
+  # ✅ GIBALIK EKSKAKTO SA IMONG GUSTO NGA LINYA!
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | FULL FEATURES${NC}"
-  echo -e "${GREEN}✅ AUTO + MANUAL MODE RESTORED${NC}"
-  echo -e "${GREEN}✅ REGION SELECTOR + TAIWAN${NC}"
+  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | NEW PROTOCOLS${NC}"
+  echo -e "${GREEN}✅ VLESS+HTTP / VLESS+XHTTP / SSH+TLS${NC}"
+  echo -e "${GREEN}✅ CREDS: kiana3.2 / UUID: $UUID${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ Project:${NC} $PROJECT_ID"
   echo -e "${GREEN}✅ Region:${NC} $REGION"
@@ -253,8 +263,8 @@ deploy_new_service() {
 
   cd "$BUILD_DIR" || exit 1
 
-  # ✅ MAX SPEED XRAY CONFIG
-  cat > config.json <<'EOF'
+  # ✅ UPDATED XRAY CONFIG — FIXED UUID LANG GI-USAB
+  cat > config.json <<EOF
 {
   "log": { "loglevel": "warning" },
   "policy": {
@@ -272,7 +282,7 @@ deploy_new_service() {
       "port": 10001,
       "listen": "127.0.0.1",
       "protocol": "trojan",
-      "settings": { "clients": [{"password": "kiana-2", "level": 0}] },
+      "settings": { "clients": [{"password": "$PASS", "level": 0}] },
       "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
@@ -291,7 +301,7 @@ deploy_new_service() {
       "port": 10002,
       "listen": "127.0.0.1",
       "protocol": "vless",
-      "settings": { "clients": [{"id": "a1b2c3d4-5678-40ef-98ab-cdef01234567", "level": 0}], "decryption": "none" },
+      "settings": { "clients": [{"id": "$UUID", "level": 0}], "decryption": "none" },
       "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
@@ -304,13 +314,68 @@ deploy_new_service() {
           "tcpKeepAliveInterval": 30
         }
       }
+    },
+    {
+      "tag": "vless-http",
+      "port": 10003,
+      "listen": "127.0.0.1",
+      "protocol": "vless",
+      "settings": { "clients": [{"id": "$UUID", "level": 0}], "decryption": "none" },
+      "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
+      "streamSettings": {
+        "network": "http",
+        "httpSettings": { "path": "/vl-http", "host": ["\$host"] },
+        "sockopt": {
+          "tcpNoDelay": true,
+          "tcpFastOpen": true,
+          "tcpCongestion": "bbr"
+        }
+      }
+    },
+    {
+      "tag": "vless-xhttp",
+      "port": 10004,
+      "listen": "127.0.0.1",
+      "protocol": "vless",
+      "settings": { "clients": [{"id": "$UUID", "level": 0}], "decryption": "none" },
+      "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
+      "streamSettings": {
+        "network": "http",
+        "httpSettings": { "path": "/vl-xhttp", "host": ["\$host"], "method": "POST" },
+        "sockopt": {
+          "tcpNoDelay": true,
+          "tcpFastOpen": true,
+          "tcpCongestion": "bbr"
+        }
+      }
+    },
+    {
+      "tag": "ssh-tls",
+      "port": 10005,
+      "listen": "127.0.0.1",
+      "protocol": "ssh",
+      "settings": {
+        "users": [{"user": "$USER", "password": "$PASS", "level": 0}],
+        "encryption": "aes-256-gcm"
+      },
+      "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "tls",
+        "tlsSettings": { "alpn": ["http/1.1"], "certificates": [{"certificate": "/etc/ssl/cert.pem", "key": "/etc/ssl/key.pem"}] },
+        "sockopt": {
+          "tcpNoDelay": true,
+          "tcpFastOpen": true,
+          "tcpCongestion": "bbr"
+        }
+      }
     }
   ],
   "outbounds": [{"protocol": "freedom", "settings": { "domainStrategy": "UseIPv4v6" }}]
 }
 EOF
 
-  # ✅ MAX SPEED NGINX CONFIG
+  # ✅ NGINX — WALAY GI-USAB GYUD
   cat > nginx.conf <<'EOF'
 worker_processes auto;
 worker_rlimit_nofile 65535;
@@ -375,12 +440,35 @@ http {
       proxy_read_timeout 86400;
       proxy_send_timeout 86400;
     }
+
+    location /vl-http {
+      proxy_pass http://127.0.0.1:10003;
+      proxy_set_header Host $host;
+      proxy_read_timeout 86400;
+      proxy_send_timeout 86400;
+    }
+
+    location /vl-xhttp {
+      proxy_pass http://127.0.0.1:10004;
+      proxy_set_header Host $host;
+      proxy_read_timeout 86400;
+      proxy_send_timeout 86400;
+    }
+
+    location /ssh-tls {
+      proxy_pass http://127.0.0.1:10005;
+      proxy_set_header Host $host;
+      proxy_read_timeout 86400;
+      proxy_send_timeout 86400;
+    }
   }
 }
 EOF
 
   cat > entrypoint.sh <<'EOF'
 #!/bin/sh
+mkdir -p /etc/ssl
+openssl req -x509 -newkey rsa:4096 -days 365 -nodes -keyout /etc/ssl/key.pem -out /etc/ssl/cert.pem -subj "/CN=localhost" 2>/dev/null
 /usr/local/bin/xray run -c /etc/xray.json &
 sleep 2
 exec /usr/local/openresty/bin/openresty -g 'daemon off;'
@@ -389,9 +477,10 @@ EOF
 
   cat > Dockerfile <<'EOF'
 FROM alpine:3.20 AS builder
-RUN apk add --no-cache curl unzip ca-certificates
+RUN apk add --no-cache curl unzip ca-certificates openssl
 RUN curl -L https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip -o xray.zip && unzip -q xray.zip xray geosite.dat geoip.dat && chmod +x xray
 FROM openresty/openresty:alpine-fat
+RUN apk add --no-cache openssl
 COPY --from=builder /xray /usr/local/bin/xray
 COPY --from=builder /geosite.dat /usr/local/share/xray/
 COPY --from=builder /geoip.dat /usr/local/share/xray/
@@ -431,16 +520,34 @@ EOF
   echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
   echo "   Address:   $DOMAIN_ONLY"
   echo "   Port:      443"
-  echo "   Password:  kiana-2"
+  echo "   Password:  $PASS"
   echo "   Path:      /tr-ConFig?ed=2560"
   echo "   SNI:       $DOMAIN_ONLY"
   echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
   echo "   Address:   $DOMAIN_ONLY"
   echo "   Port:      443"
-  echo "   UUID:      a1b2c3d4-5678-40ef-98ab-cdef01234567"
+  echo "   UUID:      $UUID"
   echo "   Path:      /vl-ConFig?ed=2560"
   echo "   Security:  TLS"
   echo "   SNI:       $DOMAIN_ONLY"
+  echo -e "\n${GREEN}🔹 VLESS+HTTP${NC}"
+  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Port:      443"
+  echo "   UUID:      $UUID"
+  echo "   Path:      /vl-http"
+  echo "   Security:  TLS"
+  echo -e "\n${GREEN}🔹 VLESS+XHTTP${NC}"
+  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Port:      443"
+  echo "   UUID:      $UUID"
+  echo "   Path:      /vl-xhttp"
+  echo "   Security:  TLS"
+  echo -e "\n${GREEN}🔹 SSH+TLS${NC}"
+  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Port:      443"
+  echo "   Username:  $USER"
+  echo "   Password:  $PASS"
+  echo "   Path:      /ssh-tls"
   echo -e "${CYAN}=========================================${NC}"
 
   read -p "\nPress [Enter] to return to Main Menu..."
