@@ -272,7 +272,7 @@ deploy_new_service() {
       "port": 10001,
       "listen": "127.0.0.1",
       "protocol": "trojan",
-      "settings": { "clients": [{"password": "kiana-2", "level": 0}] },
+      "settings": { "clients": [{"password": "kiana-3.2", "level": 0}] },
       "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
