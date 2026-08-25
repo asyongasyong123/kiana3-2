@@ -2,12 +2,11 @@
 set -euo pipefail
 
 # =========================================
-# 🚀 KIANA-3.2 GCP DEPLOYER | FULL FEATURES
-# ✅ AUTO PRESETS + MANUAL SETUP RESTORED
-# ✅ REGION SELECTOR + TAIWAN
-# ✅ NO MORE N/A VALUES
-# ✅ MAX SPEED XRAY + NGINX
-# ✅ FIXED TIMEOUT ERROR
+# 🚀 KIANA-3.2 GCP DEPLOYER | OPTIMIZED
+# ✅ INTEGRATED DNS & ADBLOCK ROUTING
+# ✅ NGINX PROXY CONNECT TIMEOUT ADDED
+# ✅ CUSTOM IMAGE CAMOUFLAGE RESTORED
+# ✅ OPTIMIZED XRAY BUFFER & NGINX TIMEOUTS
 # =========================================
 
 GREEN='\033[1;32m'
@@ -29,7 +28,7 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # ==============================================
-# LIST SERVICES (NO MORE N/A)
+# LIST SERVICES
 # ==============================================
 list_deployed_services() {
   echo -e "\n======================================"
@@ -94,7 +93,7 @@ list_deployed_services() {
 }
 
 # ==============================================
-# ✅ FULL REGION SELECTOR RESTORED
+# REGION SELECTOR
 # ==============================================
 select_region() {
   echo -e "\n=== GCP CLOUD RUN REGION SELECTION ==="
@@ -142,7 +141,7 @@ select_region() {
 }
 
 # ==============================================
-# ✅ FULL DEPLOYMENT WITH AUTO + MANUAL RESTORED
+# DEPLOYMENT FUNCTION
 # ==============================================
 deploy_new_service() {
   select_region
@@ -156,9 +155,7 @@ deploy_new_service() {
   clear
   echo ""
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | FULL FEATURES${NC}"
-  echo -e "${GREEN}✅ AUTO + MANUAL MODE RESTORED${NC}"
-  echo -e "${GREEN}✅ REGION SELECTOR + TAIWAN${NC}"
+  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | OPTIMIZED${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ Project:${NC} $PROJECT_ID"
   echo -e "${GREEN}✅ Region:${NC} $REGION"
@@ -203,9 +200,9 @@ deploy_new_service() {
               read -p "Choose preset [1-3]: " AUTO_CHOICE
               case $AUTO_CHOICE in
                   1) MEMORY="1Gi"; CPU="1"; CONCURRENCY="300" ;;
-                  2) MEMORY="2Gi"; CPU="2"; CONCURRENCY="1000" ;;
+                  2) MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
                   3) MEMORY="4Gi"; CPU="4"; CONCURRENCY="1000" ;;
-                  *) echo -e "${YELLOW}Using Balanced preset${NC}"; MEMORY="2Gi"; CPU="2"; CONCURRENCY="1000" ;;
+                  *) echo -e "${YELLOW}Using Balanced preset${NC}"; MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
               esac
               TIMEOUT="3600"
               MIN_INST="1"
@@ -232,7 +229,7 @@ deploy_new_service() {
                   esac
               done
 
-              CONCURRENCY=$([ "$CPU" = "1" ] || [ "$MEMORY" = "1Gi" ] && echo "300" || echo "1000")
+              CONCURRENCY=$([ "$CPU" = "1" ] || [ "$MEMORY" = "1Gi" ] && echo "300" || echo "500")
               TIMEOUT="3600"
 
               while true; do
@@ -253,16 +250,20 @@ deploy_new_service() {
 
   cd "$BUILD_DIR" || exit 1
 
-  # ✅ MAX SPEED XRAY CONFIG
+  # ✅ OPTIMIZED XRAY CONFIG
   cat > config.json <<'EOF'
 {
   "log": { "loglevel": "warning" },
+  "dns": {
+    "servers": ["8.8.8.8", "8.8.4.4"],
+    "strategy": "UseIPv4"
+  },
   "policy": {
     "levels": {
       "0": {
-        "handshake": 1,
-        "connIdle": 86400,
-        "bufferSize": 4194304
+        "handshake": 2,
+        "connIdle": 3600,
+        "bufferSize": 1048576
       }
     }
   },
@@ -273,14 +274,13 @@ deploy_new_service() {
       "listen": "127.0.0.1",
       "protocol": "trojan",
       "settings": { "clients": [{"password": "kiana-3.2", "level": 0}] },
-      "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
+      "sniffing": { "enabled": true, "destOverride": ["http","tls"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
         "wsSettings": { "path": "/tr-ConFig?ed=2560" },
         "sockopt": {
           "tcpNoDelay": true,
           "tcpFastOpen": true,
-          "tcpCongestion": "bbr",
           "tcpKeepAliveIdle": 300,
           "tcpKeepAliveInterval": 30
         }
@@ -292,35 +292,60 @@ deploy_new_service() {
       "listen": "127.0.0.1",
       "protocol": "vless",
       "settings": { "clients": [{"id": "a1b2c3d4-5678-40ef-98ab-cdef01234567", "level": 0}], "decryption": "none" },
-      "sniffing": { "enabled": true, "destOverride": ["http","tls","quic"], "routeOnly": true },
+      "sniffing": { "enabled": true, "destOverride": ["http","tls"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
         "wsSettings": { "path": "/vl-ConFig?ed=2560" },
         "sockopt": {
           "tcpNoDelay": true,
           "tcpFastOpen": true,
-          "tcpCongestion": "bbr",
           "tcpKeepAliveIdle": 300,
           "tcpKeepAliveInterval": 30
         }
       }
     }
   ],
-  "outbounds": [{"protocol": "freedom", "settings": { "domainStrategy": "UseIPv4v6" }}]
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct",
+      "settings": { "domainStrategy": "UseIPv4" }
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "blocked",
+      "settings": {
+        "response": { "type": "none" }
+      }
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "domain": ["geosite:category-ads-all"],
+        "outboundTag": "blocked"
+      },
+      {
+        "type": "field",
+        "inboundTag": ["trojan-ws", "vless-ws"],
+        "outboundTag": "direct"
+      }
+    ]
+  }
 }
 EOF
 
-  # ✅ MAX SPEED NGINX CONFIG
+  # ✅ OPTIMIZED NGINX CONFIG (WITH PROXY_CONNECT_TIMEOUT 10S)
   cat > nginx.conf <<'EOF'
 worker_processes auto;
-worker_rlimit_nofile 65535;
-worker_priority -10;
+worker_rlimit_nofile 10240;
 
 events {
-  worker_connections 16384;
+  worker_connections 4096;
   use epoll;
   multi_accept on;
-  accept_mutex off;
 }
 
 http {
@@ -330,22 +355,17 @@ http {
   sendfile on;
   tcp_nodelay on;
   tcp_nopush on;
-  keepalive_timeout 86400;
+  keepalive_timeout 3600;
   keepalive_requests 100000;
   client_max_body_size 0;
 
   proxy_buffering off;
   proxy_request_buffering off;
   proxy_http_version 1.1;
-  proxy_cache off;
-
-  map $http_upgrade $connection_upgrade {
-    default upgrade;
-    '' close;
-  }
+  proxy_connect_timeout 10s;
 
   server {
-    listen 8080 reuseport;
+    listen 8080;
     server_name _;
 
     location /health {
@@ -354,8 +374,14 @@ http {
     }
 
     location / {
-      proxy_pass https://www.google.com;
-      proxy_set_header Host www.google.com;
+      proxy_pass https://raw.githubusercontent.com/asyongasyong123/xray-con-fig-pic/main/1786932063430.png;
+      proxy_set_header Host raw.githubusercontent.com;
+      proxy_ssl_server_name on;
+      proxy_ssl_protocols TLSv1.2 TLSv1.3;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_redirect off;
     }
 
     location /tr-ConFig {
@@ -363,8 +389,11 @@ http {
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
       proxy_set_header Host $host;
-      proxy_read_timeout 86400;
-      proxy_send_timeout 86400;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_read_timeout 3600s;
+      proxy_send_timeout 3600s;
     }
 
     location /vl-ConFig {
@@ -372,8 +401,11 @@ http {
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
       proxy_set_header Host $host;
-      proxy_read_timeout 86400;
-      proxy_send_timeout 86400;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_read_timeout 3600s;
+      proxy_send_timeout 3600s;
     }
   }
 }
@@ -412,7 +444,7 @@ EOF
     --project="$PROJECT_ID" --platform managed --region "$REGION" --allow-unauthenticated \
     --port 8080 --memory $MEMORY --cpu $CPU --concurrency $CONCURRENCY \
     --timeout $TIMEOUT --min-instances $MIN_INST --max-instances $MAX_INST \
-    --execution-environment gen2 --cpu-boost $BILLING_FLAG --quiet
+    --execution-environment gen2 $BILLING_FLAG --cpu-boost --quiet
 
   CLOUD_RUN_URL=$(gcloud run services describe $CLOUD_RUN_SERVICE_NAME --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
   SHORT_LINK="$CLOUD_RUN_URL"
@@ -431,7 +463,7 @@ EOF
   echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
   echo "   Address:   $DOMAIN_ONLY"
   echo "   Port:      443"
-  echo "   Password:  kiana-2"
+  echo "   Password:  kiana-3.2"
   echo "   Path:      /tr-ConFig?ed=2560"
   echo "   SNI:       $DOMAIN_ONLY"
   echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
