@@ -7,6 +7,7 @@ set -euo pipefail
 # ✅ NGINX PROXY CONNECT TIMEOUT ADDED
 # ✅ CUSTOM IMAGE CAMOUFLAGE RESTORED
 # ✅ OPTIMIZED XRAY BUFFER & NGINX TIMEOUTS
+# ✅ ADDED MAX EARLY DATA FOR WS
 # =========================================
 
 GREEN='\033[1;32m'
@@ -250,7 +251,7 @@ deploy_new_service() {
 
   cd "$BUILD_DIR" || exit 1
 
-  # ✅ OPTIMIZED XRAY CONFIG
+  # ✅ OPTIMIZED XRAY CONFIG (WITH MAX EARLY DATA)
   cat > config.json <<'EOF'
 {
   "log": { "loglevel": "warning" },
@@ -277,7 +278,10 @@ deploy_new_service() {
       "sniffing": { "enabled": true, "destOverride": ["http","tls"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
-        "wsSettings": { "path": "/tr-ConFig?ed=2560" },
+        "wsSettings": {
+          "path": "/tr-ConFig?ed=2560",
+          "maxEarlyData": 2560
+        },
         "sockopt": {
           "tcpNoDelay": true,
           "tcpFastOpen": true,
@@ -295,7 +299,10 @@ deploy_new_service() {
       "sniffing": { "enabled": true, "destOverride": ["http","tls"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
-        "wsSettings": { "path": "/vl-ConFig?ed=2560" },
+        "wsSettings": {
+          "path": "/vl-ConFig?ed=2560",
+          "maxEarlyData": 2560
+        },
         "sockopt": {
           "tcpNoDelay": true,
           "tcpFastOpen": true,
