@@ -2,12 +2,11 @@
 set -euo pipefail
 
 # =========================================
-# 🚀 KIANA-3.2 GCP DEPLOYER | OPTIMIZED
+# 🚀 KIANA-3.2 GCP DEPLOYER | UNLOCKED MANUAL
 # ✅ INTEGRATED DNS & ADBLOCK ROUTING
 # ✅ NGINX PROXY CONNECT TIMEOUT ADDED
-# ✅ CUSTOM IMAGE CAMOUFLAGE RESTORED
-# ✅ OPTIMIZED XRAY BUFFER & NGINX TIMEOUTS
-# ✅ ADDED MAX EARLY DATA FOR WS
+# ✅ CUSTOM TEXT DECOY (NO GITHUB IMAGE)
+# ✅ FULL FLEXIBLE MANUAL MEMORY & VCPU SELECTION
 # =========================================
 
 GREEN='\033[1;32m'
@@ -71,7 +70,7 @@ list_deployed_services() {
       MEMORY=$(echo "$DETAILS" | jq -r '.spec.template.spec.containers[0].resources.limits.memory // "1Gi"')
       CPU=$(echo "$DETAILS" | jq -r '.spec.template.spec.containers[0].resources.limits.cpu // "1"')
       BILLING=$(echo "$DETAILS" | jq -r '.spec.template.spec.billingMode // "Instance Based"' | sed 's/_/ /g;s/^./\U&/')
-      MIN_INST=$(echo "$DETAILS" | jq -r '.spec.template.spec.minInstances // "1"')
+      MIN_INST=$(echo "$DETAILS" | jq -r '.spec.template.spec.minInstances // "0"')
       MAX_INST=$(echo "$DETAILS" | jq -r '.spec.template.spec.maxInstances // "1"')
       CONCURRENCY=$(echo "$DETAILS" | jq -r '.spec.template.spec.containerConcurrency // "300"')
 
@@ -149,14 +148,14 @@ deploy_new_service() {
 
   PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
   RAND=$(openssl rand -hex 3)
-  CLOUD_RUN_SERVICE_NAME="xray-balanced-$RAND"
+  CLOUD_RUN_SERVICE_NAME="gcp-xray-$RAND"
   BUILD_DIR=$(mktemp -d)
   trap 'rm -rf "$BUILD_DIR"' EXIT
 
   clear
   echo ""
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | OPTIMIZED${NC}"
+  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | UNLOCKED MANUAL${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ Project:${NC} $PROJECT_ID"
   echo -e "${GREEN}✅ Region:${NC} $REGION"
@@ -189,7 +188,7 @@ deploy_new_service() {
   echo -e "${GREEN}      RESOURCE CONFIG MODE${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}1) AUTO PRESETS  |  Recommended${NC}"
-  echo -e "${YELLOW}2) MANUAL SETUP  |  Custom values${NC}"
+  echo -e "${YELLOW}2) MANUAL SETUP  |  Full Memory & vCPU Range${NC}"
   while true; do
       read -p "Select Mode [1-2]: " RES_MODE
       case $RES_MODE in
@@ -197,52 +196,62 @@ deploy_new_service() {
               echo -e "\n${CYAN}--- AUTO PRESETS ---${NC}"
               echo "1) Basic:    1Gi RAM + 1 vCPU"
               echo "2) Balanced: 2Gi RAM + 2 vCPU ✅"
-              echo "3) Max:      4Gi RAM + 4 vCPU"
+              echo "3) Turbo:    2Gi RAM + 2 vCPU (High Concurrency)"
               read -p "Choose preset [1-3]: " AUTO_CHOICE
               case $AUTO_CHOICE in
                   1) MEMORY="1Gi"; CPU="1"; CONCURRENCY="300" ;;
                   2) MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
-                  3) MEMORY="4Gi"; CPU="4"; CONCURRENCY="1000" ;;
+                  3) MEMORY="2Gi"; CPU="2"; CONCURRENCY="800" ;;
                   *) echo -e "${YELLOW}Using Balanced preset${NC}"; MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
               esac
               TIMEOUT="3600"
-              MIN_INST="1"
+              MIN_INST="0"
               MAX_INST="1"
               echo -e "${GREEN}✅ Applied: $MEMORY | $CPU vCPU${NC}"
               break
               ;;
           2)
-              echo -e "\n${YELLOW}--- MANUAL SETUP ---${NC}"
-              while true; do
-                  read -p "Memory [1=1Gi|2=2Gi|3=4Gi]: " MEM
-                  case $MEM in
-                      1) MEMORY="1Gi"; break ;;
-                      2) MEMORY="2Gi"; break ;;
-                      3) MEMORY="4Gi"; break ;;
-                  esac
-              done
-              while true; do
-                  read -p "vCPU [1|2|4]: " CPU_SEL
-                  case $CPU_SEL in
-                      1) CPU="1"; break ;;
-                      2) CPU="2"; break ;;
-                      3) CPU="4"; break ;;
-                  esac
-              done
+              echo -e "\n${YELLOW}--- MANUAL SETUP (UNLOCKED ALL SPECS) ---${NC}"
+              echo "Select Memory:"
+              echo "1) 256Mi   2) 512Mi   3) 1Gi   4) 2Gi"
+              echo "5) 4Gi     6) 8Gi     7) 16Gi  8) Custom input"
+              read -p "Select Memory [1-8]: " MEM
+              case $MEM in
+                  1) MEMORY="256Mi" ;;
+                  2) MEMORY="512Mi" ;;
+                  3) MEMORY="1Gi" ;;
+                  4) MEMORY="2Gi" ;;
+                  5) MEMORY="4Gi" ;;
+                  6) MEMORY="8Gi" ;;
+                  7) MEMORY="16Gi" ;;
+                  8) read -p "Type custom memory (e.g. 512Mi, 4Gi, 32Gi): " MEMORY ;;
+                  *) MEMORY="1Gi" ;;
+              esac
 
-              CONCURRENCY=$([ "$CPU" = "1" ] || [ "$MEMORY" = "1Gi" ] && echo "300" || echo "500")
+              echo -e "\nSelect vCPU:"
+              echo "1) 1 vCPU   2) 2 vCPU   3) 4 vCPU   4) 8 vCPU   5) Custom input"
+              read -p "Select vCPU [1-5]: " CPU_SEL
+              case $CPU_SEL in
+                  1) CPU="1" ;;
+                  2) CPU="2" ;;
+                  3) CPU="4" ;;
+                  4) CPU="8" ;;
+                  5) read -p "Type custom vCPU (e.g. 0.5, 1, 2, 4, 8): " CPU ;;
+                  *) CPU="1" ;;
+              esac
+
+              read -p "Max Connections/Concurrency [Default: 500]: " CONCURRENCY
+              CONCURRENCY=${CONCURRENCY:-500}
+
               TIMEOUT="3600"
 
-              while true; do
-                  read -p "Min Instances [0/1]: " MIN_INST
-                  MIN_INST=${MIN_INST:-0}
-                  [[ "$MIN_INST" =~ ^[0-1]$ ]] && break
-              done
-              while true; do
-                  read -p "Max Instances [1-2]: " MAX_INST
-                  MAX_INST=${MAX_INST:-1}
-                  [[ "$MAX_INST" =~ ^[1-2]$ ]] && break
-              done
+              read -p "Min Instances [Default: 0]: " MIN_INST
+              MIN_INST=${MIN_INST:-0}
+
+              read -p "Max Instances [Default: 1]: " MAX_INST
+              MAX_INST=${MAX_INST:-1}
+
+              echo -e "${GREEN}✅ Custom Selected: $MEMORY RAM | $CPU vCPU | Max Inst: $MAX_INST${NC}"
               break
               ;;
           *) echo -e "${RED}Enter 1 or 2 only${NC}" ;;
@@ -251,7 +260,7 @@ deploy_new_service() {
 
   cd "$BUILD_DIR" || exit 1
 
-  # ✅ OPTIMIZED XRAY CONFIG (WITH MAX EARLY DATA)
+  # ✅ OPTIMIZED XRAY CONFIG
   cat > config.json <<'EOF'
 {
   "log": { "loglevel": "warning" },
@@ -274,13 +283,12 @@ deploy_new_service() {
       "port": 10001,
       "listen": "127.0.0.1",
       "protocol": "trojan",
-      "settings": { "clients": [{"password": "kiana-3.2", "level": 0}] },
+      "settings": { "clients": [{"password": "gcp-xray", "level": 0}] },
       "sniffing": { "enabled": true, "destOverride": ["http","tls"], "routeOnly": true },
       "streamSettings": {
         "network": "ws",
         "wsSettings": {
-          "path": "/tr-ConFig?ed=2560",
-          "maxEarlyData": 2560
+          "path": "/trojan-ws"
         },
         "sockopt": {
           "tcpNoDelay": true,
@@ -300,8 +308,7 @@ deploy_new_service() {
       "streamSettings": {
         "network": "ws",
         "wsSettings": {
-          "path": "/vl-ConFig?ed=2560",
-          "maxEarlyData": 2560
+          "path": "/vless-ws"
         },
         "sockopt": {
           "tcpNoDelay": true,
@@ -344,7 +351,7 @@ deploy_new_service() {
 }
 EOF
 
-  # ✅ OPTIMIZED NGINX CONFIG (WITH PROXY_CONNECT_TIMEOUT 10S)
+  # ✅ OPTIMIZED NGINX CONFIG (WITH CUSTOM TEXT DECOY)
   cat > nginx.conf <<'EOF'
 worker_processes auto;
 worker_rlimit_nofile 10240;
@@ -381,17 +388,11 @@ http {
     }
 
     location / {
-      proxy_pass https://raw.githubusercontent.com/asyongasyong123/xray-con-fig-pic/main/1786932063430.png;
-      proxy_set_header Host raw.githubusercontent.com;
-      proxy_ssl_server_name on;
-      proxy_ssl_protocols TLSv1.2 TLSv1.3;
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_redirect off;
+      default_type text/html;
+      return 200 "<!DOCTYPE html><html><head><title>Active</title></head><body style='font-family:sans-serif;text-align:center;padding:50px;'><h1>Cloud Server is Active</h1><p>Everything is operational.</p></body></html>";
     }
 
-    location /tr-ConFig {
+    location /trojan-ws {
       proxy_pass http://127.0.0.1:10001;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
@@ -403,7 +404,7 @@ http {
       proxy_send_timeout 3600s;
     }
 
-    location /vl-ConFig {
+    location /vless-ws {
       proxy_pass http://127.0.0.1:10002;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
@@ -451,6 +452,7 @@ EOF
     --project="$PROJECT_ID" --platform managed --region "$REGION" --allow-unauthenticated \
     --port 8080 --memory $MEMORY --cpu $CPU --concurrency $CONCURRENCY \
     --timeout $TIMEOUT --min-instances $MIN_INST --max-instances $MAX_INST \
+    --session-affinity \
     --execution-environment gen2 $BILLING_FLAG --cpu-boost --quiet
 
   CLOUD_RUN_URL=$(gcloud run services describe $CLOUD_RUN_SERVICE_NAME --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
@@ -471,13 +473,13 @@ EOF
   echo "   Address:   $DOMAIN_ONLY"
   echo "   Port:      443"
   echo "   Password:  kiana-3.2"
-  echo "   Path:      /tr-ConFig?ed=2560"
+  echo "   Path:      /trojan-ws"
   echo "   SNI:       $DOMAIN_ONLY"
   echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
   echo "   Address:   $DOMAIN_ONLY"
   echo "   Port:      443"
   echo "   UUID:      a1b2c3d4-5678-40ef-98ab-cdef01234567"
-  echo "   Path:      /vl-ConFig?ed=2560"
+  echo "   Path:      /vless-ws"
   echo "   Security:  TLS"
   echo "   SNI:       $DOMAIN_ONLY"
   echo -e "${CYAN}=========================================${NC}"
