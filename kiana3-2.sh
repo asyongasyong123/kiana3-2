@@ -456,32 +456,35 @@ EOF
     --execution-environment gen2 $BILLING_FLAG --cpu-boost --quiet
 
   CLOUD_RUN_URL=$(gcloud run services describe $CLOUD_RUN_SERVICE_NAME --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
-  SHORT_LINK="$CLOUD_RUN_URL"
-  FULL_LINK="$CLOUD_RUN_URL"
-
+  DOMAIN=$(echo "$CLOUD_RUN_URL" | sed 's|https://||')
+  CANONICAL_LINK="https://$DOMAIN"
+  
   clear
   echo -e "\n${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ DEPLOYMENT SUCCESS!${NC}"
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🔗 SHORT LINK:${NC} $SHORT_LINK"
-  echo -e "${GREEN}🌐 FULL LINK:${NC} $FULL_LINK"
-  echo -e "${GREEN}💚 HEALTH CHECK:${NC} $FULL_LINK/health"
+  echo -e "${GREEN}🔗 SHORT LINK:${NC} $CANONICAL_LINK"
+  echo -e "${GREEN}🌐 FULL LINK:${NC} $DOMAIN"
+  echo -e "${GREEN}💚 HEALTH CHECK:${NC} $DOMAIN/health"
   echo ""
   echo -e "${CYAN}📋 CLIENT CONFIGS:${NC}"
-  DOMAIN_ONLY=$(echo "$FULL_LINK" | sed 's|https://||')
+  TROJAN_HOST=$(echo "$DOMAIN" | sed 's|https://||')
+  VLESS_HOST=$(echo "$CANONICAL_LINK" | sed 's|https://||')
   echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
-  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Address:   firebase-settings.crashlytics.com"
   echo "   Port:      443"
   echo "   Password:  gcp-xray"
+  echo "   Host:      $TROJAN_HOST
   echo "   Path:      /trojan-ws"
-  echo "   SNI:       $DOMAIN_ONLY"
+  echo "   SNI:       firebase-settings.crashlytics.com"
   echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
-  echo "   Address:   $DOMAIN_ONLY"
+  echo "   Address:   firebaseremoteconfigrealtime.googleapis.com"
   echo "   Port:      443"
   echo "   UUID:      a1b2c3d4-5678-40ef-98ab-cdef01234567"
+  echo "   Host:      $VLESS_HOST
   echo "   Path:      /vless-ws"
   echo "   Security:  TLS"
-  echo "   SNI:       $DOMAIN_ONLY"
+  echo "   SNI:       firebaseremoteconfigrealtime.googleapis.com"
   echo -e "${CYAN}=========================================${NC}"
 
   read -p "\nPress [Enter] to return to Main Menu..."
