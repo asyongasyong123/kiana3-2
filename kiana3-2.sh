@@ -196,12 +196,12 @@ deploy_new_service() {
               echo -e "\n${CYAN}--- AUTO PRESETS ---${NC}"
               echo "1) Basic:    1Gi RAM + 1 vCPU"
               echo "2) Balanced: 2Gi RAM + 2 vCPU ✅"
-              echo "3) Turbo:    2Gi RAM + 2 vCPU (High Concurrency)"
+              echo "3) Turbo:    4Gi RAM + 2 vCPU (High Concurrency)"
               read -p "Choose preset [1-3]: " AUTO_CHOICE
               case $AUTO_CHOICE in
-                  1) MEMORY="1Gi"; CPU="1"; CONCURRENCY="300" ;;
-                  2) MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
-                  3) MEMORY="2Gi"; CPU="2"; CONCURRENCY="800" ;;
+                  1) MEMORY="1Gi"; CPU="1"; CONCURRENCY="1000" ;;
+                  2) MEMORY="2Gi"; CPU="2"; CONCURRENCY="1000" ;;
+                  3) MEMORY="4Gi"; CPU="2"; CONCURRENCY="1000" ;;
                   *) echo -e "${YELLOW}Using Balanced preset${NC}"; MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
               esac
               TIMEOUT="3600"
@@ -240,8 +240,8 @@ deploy_new_service() {
                   *) CPU="1" ;;
               esac
 
-              read -p "Max Connections/Concurrency [Default: 500]: " CONCURRENCY
-              CONCURRENCY=${CONCURRENCY:-500}
+              read -p "Max Connections/Concurrency [Default: 1000]: " CONCURRENCY
+              CONCURRENCY=${CONCURRENCY:-1000}
 
               TIMEOUT="3600"
 
@@ -458,7 +458,11 @@ EOF
   CLOUD_RUN_URL=$(gcloud run services describe "$CLOUD_RUN_SERVICE_NAME" --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
   DOMAIN=$(echo "$CLOUD_RUN_URL" | sed 's|https://||')
   CANONICAL_LINK="https://$DOMAIN"
-  
+
+  # 🔗 GENERATE RAW IMPORTABLE LINKS
+  TROJAN_LINK="trojan://gcp-xray@firebase-settings.crashlytics.com:443?type=ws&host=${DOMAIN}&headerType=none&path=%2Ftrojan-ws&security=tls&sni=firebase-settings.crashlytics.com#${CLOUD_RUN_SERVICE_NAME}"
+  VLESS_LINK="vless://a1b2c3d4-5678-40ef-98ab-cdef01234567@firebaseremoteconfigrealtime.googleapis.com:443?encryption=none&type=ws&host=${DOMAIN}&headerType=none&path=%2Fvless-ws&security=tls&sni=firebaseremoteconfigrealtime.googleapis.com#${CLOUD_RUN_SERVICE_NAME}"
+
   clear
   echo -e "\n${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ DEPLOYMENT SUCCESS!${NC}"
@@ -467,23 +471,12 @@ EOF
   echo -e "${GREEN}🌐 FULL LINK:${NC} $CANONICAL_LINK"
   echo -e "${GREEN}💚 HEALTH CHECK:${NC} $CANONICAL_LINK/health"
   echo ""
-  echo -e "${CYAN}📋 CLIENT CONFIGS:${NC}"
-  echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
-  echo "   Address:   firebase-settings.crashlytics.com"
-  echo "   Port:      443"
-  echo "   Password:  gcp-xray"
-  echo "   Host:      $DOMAIN"
-  echo "   Path:      /trojan-ws"
-  echo "   SNI:       firebase-settings.crashlytics.com"
+  echo -e "${CYAN}📋 ONE-CLICK COPY CONFIG LINKS FOR NETMOD:${NC}"
+  echo -e "${GREEN}🔹 TROJAN LINK:${NC}"
+  echo "$TROJAN_LINK"
   echo ""
-  echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
-  echo "   Address:   firebaseremoteconfigrealtime.googleapis.com"
-  echo "   Port:      443"
-  echo "   UUID:      a1b2c3d4-5678-40ef-98ab-cdef01234567"
-  echo "   Host:      $DOMAIN"
-  echo "   Path:      /vless-ws"
-  echo "   Security:  TLS"
-  echo "   SNI:       firebaseremoteconfigrealtime.googleapis.com"
+  echo -e "${GREEN}🔹 VLESS LINK:${NC}"
+  echo "$VLESS_LINK"
   echo -e "${CYAN}=========================================${NC}"
 
   read -p "\nPress [Enter] to return to Main Menu..."
