@@ -455,7 +455,7 @@ EOF
     --session-affinity \
     --execution-environment gen2 $BILLING_FLAG --cpu-boost --quiet
 
-  CLOUD_RUN_URL=$(gcloud run services describe $CLOUD_RUN_SERVICE_NAME --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
+  CLOUD_RUN_URL=$(gcloud run services describe "$CLOUD_RUN_SERVICE_NAME" --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
   DOMAIN=$(echo "$CLOUD_RUN_URL" | sed 's|https://||')
   CANONICAL_LINK="https://$DOMAIN"
   
@@ -463,25 +463,24 @@ EOF
   echo -e "\n${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ DEPLOYMENT SUCCESS!${NC}"
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🔗 SHORT LINK:${NC} $CANONICAL_LINK"
-  echo -e "${GREEN}🌐 FULL LINK:${NC} $DOMAIN"
-  echo -e "${GREEN}💚 HEALTH CHECK:${NC} $DOMAIN/health"
+  echo -e "${GREEN}🔗 SHORT LINK:${NC} $DOMAIN"
+  echo -e "${GREEN}🌐 FULL LINK:${NC} $CANONICAL_LINK"
+  echo -e "${GREEN}💚 HEALTH CHECK:${NC} $CANONICAL_LINK/health"
   echo ""
   echo -e "${CYAN}📋 CLIENT CONFIGS:${NC}"
-  TROJAN_HOST=$(echo "$DOMAIN" | sed 's|https://||')
-  VLESS_HOST=$(echo "$CANONICAL_LINK" | sed 's|https://||')
   echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
   echo "   Address:   firebase-settings.crashlytics.com"
   echo "   Port:      443"
   echo "   Password:  gcp-xray"
-  echo "   Host:      $TROJAN_HOST
+  echo "   Host:      $DOMAIN"
   echo "   Path:      /trojan-ws"
   echo "   SNI:       firebase-settings.crashlytics.com"
+  echo ""
   echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
   echo "   Address:   firebaseremoteconfigrealtime.googleapis.com"
   echo "   Port:      443"
   echo "   UUID:      a1b2c3d4-5678-40ef-98ab-cdef01234567"
-  echo "   Host:      $VLESS_HOST
+  echo "   Host:      $DOMAIN"
   echo "   Path:      /vless-ws"
   echo "   Security:  TLS"
   echo "   SNI:       firebaseremoteconfigrealtime.googleapis.com"
