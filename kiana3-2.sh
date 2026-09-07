@@ -472,7 +472,7 @@ EOF
   echo -e "${GREEN}🔹 TROJAN WS/TLS${NC}"
   echo "   Address:   $DOMAIN_ONLY"
   echo "   Port:      443"
-  echo "   Password:  kiana-3.2"
+  echo "   Password:  gcp-xray"
   echo "   Path:      /trojan-ws"
   echo "   SNI:       $DOMAIN_ONLY"
   echo -e "\n${GREEN}🔹 VLESS WS/TLS${NC}"
