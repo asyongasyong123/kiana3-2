@@ -2,11 +2,12 @@
 set -euo pipefail
 
 # =========================================
-# 🚀 KIANA-3.2 GCP DEPLOYER | UNLOCKED MANUAL
+# 🚀 GCP-XRAY DEPLOYER | AUTOMODE & MANUAL MODE DEPLOYMENT
 # ✅ INTEGRATED DNS & ADBLOCK ROUTING
 # ✅ NGINX PROXY CONNECT TIMEOUT ADDED
 # ✅ CUSTOM TEXT DECOY (NO GITHUB IMAGE)
 # ✅ FULL FLEXIBLE MANUAL MEMORY & VCPU SELECTION
+# ✅ AUTO-SAVE CONFIGS TO FILE FOR EDITOR COPYING
 # =========================================
 
 GREEN='\033[1;32m'
@@ -32,7 +33,7 @@ fi
 # ==============================================
 list_deployed_services() {
   echo -e "\n======================================"
-  echo -e "${CYAN}📋 ALL DEPLOYED SERVICES - FULL DETAILS${NC}"
+  echo -e "${CYAN}📋 ALL DEPLOYED GCP-XRAY SERVICES - FULL DETAILS${NC}"
   echo -e "======================================"
   PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
   echo "Project: $PROJECT_ID"
@@ -155,7 +156,7 @@ deploy_new_service() {
   clear
   echo ""
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🚀 KIANA-3.2 GCP DEPLOYER | UNLOCKED MANUAL${NC}"
+  echo -e "${GREEN}🚀 GCP-XRAY DEPLOYER | AUTOMODE & MANUAL MODE DEPLOYMENT${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}✅ Project:${NC} $PROJECT_ID"
   echo -e "${GREEN}✅ Region:${NC} $REGION"
@@ -202,7 +203,7 @@ deploy_new_service() {
                   1) MEMORY="1Gi"; CPU="1"; CONCURRENCY="1000" ;;
                   2) MEMORY="2Gi"; CPU="2"; CONCURRENCY="1000" ;;
                   3) MEMORY="4Gi"; CPU="2"; CONCURRENCY="1000" ;;
-                  *) echo -e "${YELLOW}Using Balanced preset${NC}"; MEMORY="2Gi"; CPU="2"; CONCURRENCY="500" ;;
+                  *) echo -e "${YELLOW}Using Balanced preset${NC}"; MEMORY="2Gi"; CPU="2"; CONCURRENCY="1000" ;;
               esac
               TIMEOUT="3600"
               MIN_INST="0"
@@ -463,15 +464,25 @@ EOF
   TROJAN_LINK="trojan://gcp-xray@firebase-settings.crashlytics.com:443?type=ws&host=${DOMAIN}&headerType=none&path=%2Ftrojan-ws&security=tls&sni=firebase-settings.crashlytics.com#${CLOUD_RUN_SERVICE_NAME}"
   VLESS_LINK="vless://a1b2c3d4-5678-40ef-98ab-cdef01234567@firebaseremoteconfigrealtime.googleapis.com:443?encryption=none&type=ws&host=${DOMAIN}&headerType=none&path=%2Fvless-ws&security=tls&sni=firebaseremoteconfigrealtime.googleapis.com#${CLOUD_RUN_SERVICE_NAME}"
 
+  # 📁 AUTOMATIC SAVE TO FILE PARA SA EDITOR COPYING
+  cat <<EOF > "$HOME/configs.txt"
+=== TROJAN LINK ===
+$TROJAN_LINK
+
+=== VLESS LINK ===
+$VLESS_LINK
+EOF
+
   clear
   echo -e "\n${CYAN}=========================================${NC}"
-  echo -e "${GREEN}✅ DEPLOYMENT SUCCESS!${NC}"
+  echo -e "${GREEN}✅ GCP-XRAY DEPLOYMENT SUCCESS!${NC}"
   echo -e "${CYAN}=========================================${NC}"
-  echo -e "${GREEN}🔗 SHORT LINK:${NC} $DOMAIN"
-  echo -e "${GREEN}🌐 FULL LINK:${NC} $CANONICAL_LINK"
+  echo -e "${GREEN}🔗 SHORT LINK:${NC} $CANONICAL_LINK"
+  echo -e "${GREEN}🌐 FULL LINK:${NC} $CÑDOMAIN"
   echo -e "${GREEN}💚 HEALTH CHECK:${NC} $CANONICAL_LINK/health"
+  echo -e "${YELLOW}📁 SAVED TO FILE:${NC} configs.txt (Open Cloud Shell Editor to copy easily)"
   echo ""
-  echo -e "${CYAN}📋 ONE-CLICK COPY CONFIG LINKS FOR NETMOD:${NC}"
+  echo -e "${CYAN}📋 GENERATED CONFIG LINKS FOR NETMOD:${NC}"
   echo -e "${GREEN}🔹 TROJAN LINK:${NC}"
   echo "$TROJAN_LINK"
   echo ""
@@ -479,7 +490,7 @@ EOF
   echo "$VLESS_LINK"
   echo -e "${CYAN}=========================================${NC}"
 
-  read -p "\nPress [Enter] to return to Main Menu..."
+  read -p $'\nPress [Enter] to return to Main Menu...'
 }
 
 # ==============================================
@@ -488,13 +499,13 @@ EOF
 while true; do
   clear
   echo "======================================"
-  echo "   🚀 KIANA-3.2 GCP DEPLOYER MENU    "
+  echo "    GCP-XRAY DEPLOYER MENU    "
   echo "======================================"
-  echo "1) Deploy new Xray service"
-  echo "2) List all services & FULL DETAILS"
-  echo "3) Exit script"
+  echo "1) Deploy New GCP-XRAY Service"
+  echo "2) List All Services & FULL DETAILS"
+  echo "3) Exit Script"
   echo "======================================"
-  read -p "Select option [1-3]: " MENU_CHOICE
+  read -p "Select Option [1-3]: " MENU_CHOICE
 
   case $MENU_CHOICE in
     1) deploy_new_service ;;
