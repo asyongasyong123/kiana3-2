@@ -478,7 +478,7 @@ EOF
   echo -e "${GREEN}✅ GCP-XRAY DEPLOYMENT SUCCESS!${NC}"
   echo -e "${CYAN}=========================================${NC}"
   echo -e "${GREEN}🔗 SHORT LINK:${NC} $CANONICAL_LINK"
-  echo -e "${GREEN}🌐 FULL LINK:${NC} $CÑDOMAIN"
+  echo -e "${GREEN}🌐 FULL LINK:${NC} $DOMAIN"
   echo -e "${GREEN}💚 HEALTH CHECK:${NC} $CANONICAL_LINK/health"
   echo -e "${YELLOW}📁 SAVED TO FILE:${NC} configs.txt (Open Cloud Shell Editor to copy easily)"
   echo ""
